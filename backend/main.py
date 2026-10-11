@@ -1,7 +1,19 @@
+import requests
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
 
-app = FastAPI(title="lolPredictor")
 
+app = FastAPI(title="lolPredict")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+DATA_DRAGON = "https://ddragon.leagueoflegends.com"
 
 @app.get("/")
 def home():
@@ -9,20 +21,54 @@ def home():
             "status": "running"
     }
 
-@app.get("/champions/{champion_name}")
-def get_champion(champion_name: str):
+@app.get("/champions")
+def get_champion(search: str = ""):
+    try:
+        version_response = requests.get(
+            f"{DATA_DRAGON}/api/versions.json",
+            timeout=10
+        )
+        version_response.raise_for_status()
 
-    champions = {
-        "ahri": "mage",
-        "garen": "fighter",
-        "jinx": "marksman "
-    }
+        versions = version_response.json()
+        latest_version = versions[0]
+        url = (
+            f"{DATA_DRAGON}/cdn/{latest_version}"
+            "/data/en_US/champion.json"
+        )
 
-    role = champions.get(champion_name.lower())
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
 
-    if role is None:
-        raise HTTPException(status_code=404,
-                            detail="Champion not found")
-    
-    return {"champion_name": champion_name, "role": role}
+        champion_data = response.json()["data"]
+
+        champions = []
+
+        for champion in champion_data.values():
+            champions.append({
+                #"id": champion["id"],
+                "name": champion["name"],
+                #"title": champion["title"],
+                "tags": champion["tags"]
+            })
+
+        if search:
+            matches = []
+
+            for champion in champions:
+                if search.lower() in champion["name"].lower():
+                    matches.append(champion)
+            champions = matches
+
+        return {
+            "version": latest_version,
+            "count": len(champions),
+            "champions": champions
+        }
+
+    except (requests.RequestException, ValueError, KeyError, IndexError):
+        raise HTTPException(
+            status_code=502,
+            detail="Failed to fetch champion data"
+        )
 
