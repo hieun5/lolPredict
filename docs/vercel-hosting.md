@@ -1,6 +1,6 @@
 # Vercel hosting preparation
 
-The public application is named **lolProPredictor**. The original hosting-preparation milestone configured a single Vercel project for the existing desktop site and 2025 prediction pipeline. A subsequent [preview milestone](vercel-preview.md) deployed and verified it on Vercel Hobby. Public production release remains pending.
+The public application is named **lolProPredictor**. The original hosting-preparation milestone configured a single Vercel project for the existing desktop site and 2025 prediction pipeline. Subsequent [preview](vercel-preview.md) and [production](production-release.md) milestones deployed and verified it on Vercel Hobby. The [public site](https://lolpropredictor.vercel.app) requires no sign-in.
 
 ## Build and serving paths
 
@@ -61,9 +61,9 @@ The confirmed deployment target is `hieu-nguyen4/lolpropredictor` on Hobby, with
 
 With CLI deployment, first inspect the intended project from this root using `vercel project inspect --non-interactive`. Establish the correct owner/project before deploying; do not rely on automatic linking. Test a preview's health, assets, predictions, and validation errors before production. A protected preview needs authenticated access, not disabled protection. Rollback means restoring a prior deployment, including its matching model.
 
-The actual Linux/Vercel build and hosted HTTP checks passed in the [preview milestone](vercel-preview.md). Remaining release work: review the desktop in a connected browser, stage/test production, then assign the public domain and share its URL. No cold-start benchmark or load test has been performed.
+The actual Linux/Vercel build and hosted HTTP checks passed in both the [preview milestone](vercel-preview.md) and [production launch](production-release.md). Production was staged, tested, promoted, and verified without credentials at its registered domain. Desktop visual review remains pending; the selected next milestone is polishing the prediction page. No cold-start benchmark or load test has been performed.
 
-## Milestone verification
+## Original hosting-preparation verification
 
 The build hook completed in a fresh local Python 3.14.8 environment with Node.js 24.21. It reproduced the previous test accuracy/AUC: pre-draft 0.588997 / 0.618964 and completed draft 0.583062 / 0.622152. The serving model is 5,248,520 bytes. All 29 required Linux Python 3.14 wheels resolved successfully; their combined uncompressed contents measured about 243.2 MiB. This is a dependency size estimate, not Vercel's final function bundle measurement.
 

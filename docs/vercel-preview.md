@@ -51,6 +51,8 @@ npx --yes vercel@64.2.0 inspect lolpropredictor-16qfbmnc5-hieu-nguyen4.vercel.ap
 
 ## Remaining release work
 
+Production was launched in the subsequent [production milestone](production-release.md) at https://lolpropredictor.vercel.app. The following records the remaining work at the original preview checkpoint.
+
 All 38 Python checks passed. Authenticated HTTP verification passed against the exact preview URL: page, compiled JavaScript/CSS/favicon, model readiness, catalog, evaluation and diagnostics, both prediction phases, six invalid inputs, unknown API routes, and five private-file paths. The equivalent local HTTP check also passed. The cloud sample matchup (BNK FEARX vs DN SOOPers) returned blue probabilities of 0.833605 before draft and 0.826745 with the smoke test's completed draft, matching local inference to numerical precision. A deployment-scoped runtime error query over the preceding 30 minutes returned zero records after these checks.
 
 Complete the desktop browser review, then stage and verify a production build before assigning the public domain. Browser review is separate from HTTP verification: the latter cannot establish the appearance of native selects or actual focus/scroll behavior in a browser.
