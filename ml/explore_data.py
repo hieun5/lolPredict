@@ -38,11 +38,11 @@ team_stats = team_data.groupby(
     ["league", "teamname"]
 ).agg(
     games=("result", "count"),
-    wins=("result", "sum"),
-    losses=("result", "sum")
+    wins=("result", "sum")
 
 )
 
+team_stats["losses"] = team_stats["games"] - team_stats["wins"]
 team_stats["win_rate"] = (
     team_stats["wins"] / team_stats["games"]) * 100
 

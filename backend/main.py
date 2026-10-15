@@ -1,6 +1,7 @@
-import requests
+﻿import requests
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
+from backend.predictions import router as prediction_router
 
 
 app = FastAPI(title="lolPredict")
@@ -9,7 +10,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -46,9 +47,9 @@ def get_champion(search: str = ""):
 
         for champion in champion_data.values():
             champions.append({
-                #"id": champion["id"],
+                "id": champion["id"],
                 "name": champion["name"],
-                #"title": champion["title"],
+                "title": champion["title"],
                 "tags": champion["tags"]
             })
 
@@ -71,4 +72,7 @@ def get_champion(search: str = ""):
             status_code=502,
             detail="Failed to fetch champion data"
         )
+
+
+app.include_router(prediction_router)
 

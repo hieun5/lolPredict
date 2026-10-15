@@ -14,3 +14,8 @@ node_modules/
 
 # Frontend build files
 dist/
+
+# Rebuildable model outputs
+artifacts/
+data/processed/
+data/snapshots/
