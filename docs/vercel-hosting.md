@@ -1,6 +1,6 @@
 # Vercel hosting preparation
 
-The public application is named **lolProPredictor**. This milestone prepares a single Vercel project for the existing desktop site and 2025 prediction pipeline. It does not create or publish a Vercel project.
+The public application is named **lolProPredictor**. The original hosting-preparation milestone configured a single Vercel project for the existing desktop site and 2025 prediction pipeline. A subsequent [preview milestone](vercel-preview.md) deployed and verified it on Vercel Hobby. Public production release remains pending.
 
 ## Build and serving paths
 
@@ -47,13 +47,21 @@ npm test
 
 This preview serves the compiled frontend and production API on one origin; it does not use Vite's development proxy. Rebuild and restart this server after changing the release. The smoke check uses the catalog directly, so it requires neither raw data nor processed tables at request time.
 
+To run the same checks against a protected Vercel preview, first link and inspect the intended project, then use the exact preview origin:
+
+```powershell
+.\.cache\hosting-venv\Scripts\python.exe tests/smoke_api.py --base-url https://YOUR-PREVIEW.vercel.app --hosted --vercel
+```
+
+This uses pinned Vercel CLI 64.2.0 and your existing CLI authentication. It leaves deployment protection enabled and sends prediction JSON through standard input. It does not print or save bypass credentials. Browser access and application checks are separate: HTTP smoke tests cannot establish visual layout or focus/scroll behavior in a real browser.
+
 ## Deployment checkpoint
 
-When starting the deployment milestone, use the intended personal Hobby account, import `hieun5/lolPredict`, and keep **Root Directory** at the repository root. Select **FastAPI**, **Node.js 24**, and Python **3.14**. Leave dashboard Build Command and Output Directory overrides unset so `vercel.json` and framework defaults apply. No application secrets or API keys are required. No paid integrations are configured. Hobby includes usage limits; a free public site is not unlimited hosting.
+The confirmed deployment target is `hieu-nguyen4/lolpropredictor` on Hobby, with **Root Directory** at the repository root, **Node.js 24**, and Python **3.14**. The repository's **FastAPI** preset and build command override the dashboard defaults through `vercel.json`. No application secrets or API keys are required. No paid integrations are configured. Hobby includes usage limits; a free public site is not unlimited hosting. Git integration is not connected yet; the verified preview was uploaded through the CLI.
 
 With CLI deployment, first inspect the intended project from this root using `vercel project inspect --non-interactive`. Establish the correct owner/project before deploying; do not rely on automatic linking. Test a preview's health, assets, predictions, and validation errors before production. A protected preview needs authenticated access, not disabled protection. Rollback means restoring a prior deployment, including its matching model.
 
-Remaining release work: verify the actual Linux/Vercel build and bundle size, review the desktop in a connected browser, test the hosted preview, then release production and share its URL. Local build checks cannot establish CDN routing or cold-start performance on Vercel.
+The actual Linux/Vercel build and hosted HTTP checks passed in the [preview milestone](vercel-preview.md). Remaining release work: review the desktop in a connected browser, stage/test production, then assign the public domain and share its URL. No cold-start benchmark or load test has been performed.
 
 ## Milestone verification
 

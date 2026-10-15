@@ -1,48 +1,47 @@
-﻿"""Exercise real HTTP requests through Vite's API proxy. Start both servers first."""
+"""Check local or protected Vercel predictions through real HTTP requests."""
 import argparse
 import json
 import re
-from urllib.error import HTTPError
-from urllib.request import Request, urlopen
+from http_client import HttpClient
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--base-url", default="http://127.0.0.1:5173")
 parser.add_argument("--hosted", action="store_true", help="Also check release health, static assets, and private paths")
+parser.add_argument("--vercel", action="store_true", help="Use authenticated Vercel curl for protected previews")
 args = parser.parse_args()
 BASE = args.base_url.rstrip("/")
+client = HttpClient(BASE, vercel=args.vercel)
 
 
 def request(path, payload=None):
-    headers = {"Content-Type": "application/json"} if payload is not None else {}
     body = json.dumps(payload).encode() if payload is not None else None
+    status, data = client.fetch(path, body)
     try:
-        with urlopen(Request(BASE + path, data=body, headers=headers), timeout=30) as response:
-            return response.status, json.loads(response.read())
-    except HTTPError as error:
-        return error.code, json.loads(error.read())
+        return status, json.loads(data)
+    except json.JSONDecodeError as error:
+        raise AssertionError(f"{path} returned HTTP {status} without JSON. Check deployment health and access.") from error
 
 
-with urlopen(BASE, timeout=10) as response:
-    assert response.status == 200
-    page = response.read().decode()
-    assert "lolProPredictor" in page
+status, content = client.fetch("/")
+assert status == 200, f"Page returned HTTP {status}; check deployment status and access."
+page = content.decode()
+assert "lolProPredictor" in page
 if args.hosted:
-    scripts = re.findall(r'<script[^>]+src="([^"]+)"', page)
-    assert scripts and all(script.startswith("/assets/") for script in scripts)
-    for asset in scripts:
-        with urlopen(BASE + asset, timeout=10) as response:
-            assert response.status == 200 and len(response.read()) > 0
+    # Vercel may inject its own preview toolbar script. Verify our compiled
+    # application assets without treating that platform script as app output.
+    scripts = [src for src in re.findall(r'<script[^>]+src="([^"]+)"', page) if src.startswith("/assets/")]
+    styles = [href for href in re.findall(r'<link[^>]+href="([^"]+)"', page) if href.startswith("/assets/")]
+    assert scripts and any(path.endswith(".css") for path in styles)
+    for asset in [*scripts, *styles, "/favicon.svg"]:
+        status, content = client.fetch(asset)
+        assert status == 200 and content
     status, health = request("/api/health")
     assert status == 200 and health["status"] == "ready" and health["season"] == 2025
     status, missing = request("/api/does-not-exist")
     assert status == 404 and missing["detail"] == "API route not found."
     for path in ("/release/models.joblib", "/release/manifest.json", "/artifacts/current.json", "/data/source.csv", "/.env"):
-        try:
-            urlopen(BASE + path, timeout=10)
-        except HTTPError as error:
-            assert error.code == 404
-        else:
-            raise AssertionError(f"Unexpected public file: {path}")
+        status, _ = client.fetch(path)
+        assert status == 404, f"Unexpected public file response for {path}: {status}"
 status, catalog = request("/api/catalog")
 assert status == 200 and catalog["games"] > 0
 status, evaluation = request("/api/evaluation")
@@ -84,6 +83,9 @@ for case in invalid:
     assert status == 422, (status, error)
 print(json.dumps({
     "http_checks": "PASS: page, catalog, evaluation, pre-draft, completed draft, six invalid requests",
+    "hosted_checks": "PASS: assets, health, missing API routes, private file paths" if args.hosted else "not requested",
+    "target": BASE,
+    "transport": "authenticated Vercel curl" if args.vercel else "direct HTTP",
     "matchup": [pre["blue_team"], pre["red_team"]],
     "pre_draft": pre["pre_draft"],
     "post_draft": post["post_draft"],

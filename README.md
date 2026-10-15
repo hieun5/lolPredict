@@ -96,7 +96,7 @@ The workflow uses the existing 2025 dataset only and performs no downloads. A fa
 
 Completed-draft submission moves focus and scrolls to the estimate after a successful prediction, respecting reduced-motion preferences. The desktop flow also provides team/draft side swaps, remaining-pick guidance, inline prediction errors, draft summaries, and links back to editing. Performance-chart loading is independent of prediction availability.
 
-The hosting build serves the desktop frontend and `/api` together through a dedicated FastAPI entry point. It trains a verified release from the existing 2025 CSV at build time, then serves read-only predictions. See [Vercel hosting preparation](docs/vercel-hosting.md) for the local production preview and deployment settings. The public launch and visual browser review remain pending. Mobile layout work is outside the current scope.
+The hosting build serves the desktop frontend and `/api` together through a dedicated FastAPI entry point. It trains a verified release from the existing 2025 CSV at build time, then serves read-only predictions. A [Vercel preview](https://lolpropredictor-16qfbmnc5-hieu-nguyen4.vercel.app) is deployed and passes authenticated HTTP checks; Vercel sign-in is required. See [the deployment report](docs/vercel-preview.md) and [hosting setup](docs/vercel-hosting.md). The public production launch and visual browser review remain pending. Mobile layout work is outside the current scope.
 
 Development proceeds one milestone at a time. Completed milestones are committed and pushed to GitHub, then reviewed before beginning the next. Frontend interaction checks run with `npm test` (development Node version: 24.21).
 
