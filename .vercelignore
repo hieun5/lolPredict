@@ -1,0 +1,11 @@
+.cache/
+.venv/
+backend/.venv/
+artifacts/
+release/
+data/processed/
+data/snapshots/
+frontend/node_modules/
+frontend/dist/
+.env*
+**/__pycache__/

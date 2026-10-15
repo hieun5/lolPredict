@@ -1,6 +1,5 @@
 ﻿"""Regression checks for data leakage, draft validity, and prediction input handling."""
 import unittest
-from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -119,11 +118,10 @@ class InputTests(unittest.TestCase):
 
     def test_unknown_team_and_league_rejected(self):
         catalog = {"leagues": ["LCK"], "teams": [{"id": "A"}]}
-        with patch("backend.predictions.load_bundle", return_value={"catalog": catalog}):
-            for request in (self.request(), self.request(league="invalid")):
-                with self.assertRaises(HTTPException) as error:
-                    predict(request)
-                self.assertEqual(error.exception.status_code, 422)
+        for request in (self.request(), self.request(league="invalid")):
+            with self.assertRaises(HTTPException) as error:
+                predict(request, {"catalog": catalog})
+            self.assertEqual(error.exception.status_code, 422)
 
 
 if __name__ == "__main__":

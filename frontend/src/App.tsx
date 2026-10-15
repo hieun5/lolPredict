@@ -155,7 +155,7 @@ function App() {
   return (
     <main className="workspace">
       <header className="masthead">
-        <a className="brand" href="/"><span className="brand-mark" aria-hidden="true">R</span> RiftPredict</a>
+        <a className="brand" href="/"><span className="brand-mark" aria-hidden="true">L</span> lolProPredictor</a>
         <span className="badge">PRO MATCH LAB</span>
       </header>
 
@@ -260,7 +260,7 @@ function App() {
         {performanceError && <div className="panel performance-unavailable" role="status"><p>{performanceError}</p><button className="text-button" type="button" onClick={() => { setPerformanceError(""); setPerformanceLoading(true); setPerformanceRetry((value) => value + 1); }}>Retry performance details</button></div>}
         {evaluation && <ModelPerformance evaluation={evaluation} />}
       </>}
-      <footer>RiftPredict <span>Professional League of Legends · Research in progress</span></footer>
+      <footer>lolProPredictor <span>Professional League of Legends · Research in progress</span></footer>
     </main>
   );
 }

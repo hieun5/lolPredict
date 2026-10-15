@@ -1,12 +1,15 @@
 ﻿"""Exercise real HTTP requests through Vite's API proxy. Start both servers first."""
-import csv
+import argparse
 import json
-from pathlib import Path
+import re
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-ROOT = Path(__file__).resolve().parents[1]
-BASE = "http://127.0.0.1:5173"
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--base-url", default="http://127.0.0.1:5173")
+parser.add_argument("--hosted", action="store_true", help="Also check release health, static assets, and private paths")
+args = parser.parse_args()
+BASE = args.base_url.rstrip("/")
 
 
 def request(path, payload=None):
@@ -21,7 +24,25 @@ def request(path, payload=None):
 
 with urlopen(BASE, timeout=10) as response:
     assert response.status == 200
-    assert b"RiftPredict" in response.read()
+    page = response.read().decode()
+    assert "lolProPredictor" in page
+if args.hosted:
+    scripts = re.findall(r'<script[^>]+src="([^"]+)"', page)
+    assert scripts and all(script.startswith("/assets/") for script in scripts)
+    for asset in scripts:
+        with urlopen(BASE + asset, timeout=10) as response:
+            assert response.status == 200 and len(response.read()) > 0
+    status, health = request("/api/health")
+    assert status == 200 and health["status"] == "ready" and health["season"] == 2025
+    status, missing = request("/api/does-not-exist")
+    assert status == 404 and missing["detail"] == "API route not found."
+    for path in ("/release/models.joblib", "/release/manifest.json", "/artifacts/current.json", "/data/source.csv", "/.env"):
+        try:
+            urlopen(BASE + path, timeout=10)
+        except HTTPError as error:
+            assert error.code == 404
+        else:
+            raise AssertionError(f"Unexpected public file: {path}")
 status, catalog = request("/api/catalog")
 assert status == 200 and catalog["games"] > 0
 status, evaluation = request("/api/evaluation")
@@ -36,16 +57,16 @@ for phase in ("pre_draft", "post_draft"):
     assert sum(month["games"] for month in test["diagnostics"][phase]["monthly"]) == test[phase]["games"]
     choice = evaluation["selection"][phase]
     assert choice["selected"] == min(choice["validation_scores"], key=lambda tag: (choice["validation_scores"][tag]["log_loss"], tag))
-with (ROOT / "data/processed/matches.csv").open(encoding="utf-8-sig", newline="") as source:
-    row = next(row for row in csv.DictReader(source) if row["league"] == "LCK" and row["draft_complete"] == "True")
-payload = {"league": row["league"], "blue_team_id": row["blue_id"], "red_team_id": row["red_id"]}
+teams = [team for team in catalog["teams"] if "LCK" in team["leagues"]]
+payload = {"league": "LCK", "blue_team_id": teams[0]["id"], "red_team_id": teams[1]["id"]}
 status, pre = request("/api/predict", payload)
 assert status == 200 and pre["post_draft"] is None
 assert pre["patch"] == catalog["latest_patch"]
 assert pre["models"]["pre_draft"] == evaluation["selection"]["pre_draft"]["selected"]
 assert 0 < pre["pre_draft"]["blue"] < 1
 assert abs(sum(pre["pre_draft"].values()) - 1) < 1e-10
-drafts = {f"{side}_draft": {role: row[f"{side}_{role}"] for role in ("top", "jng", "mid", "bot", "sup")} for side in ("blue", "red")}
+drafts = {f"{side}_draft": dict(zip(catalog["roles"], catalog["champions"][offset:offset + 5]))
+          for side, offset in (("blue", 0), ("red", 5))}
 status, post = request("/api/predict", {**payload, **drafts})
 assert status == 200 and post["post_draft"] is not None
 assert abs(sum(post["post_draft"].values()) - 1) < 1e-10

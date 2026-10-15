@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from backend.predictions import router as prediction_router
 
 
-app = FastAPI(title="lolPredict")
+app = FastAPI(title="lolProPredictor")
 
 app.add_middleware(
     CORSMiddleware,
@@ -18,7 +18,7 @@ DATA_DRAGON = "https://ddragon.leagueoflegends.com"
 
 @app.get("/")
 def home():
-    return {"message": "Welcome to lolPredictor!",
+    return {"message": "Welcome to lolProPredictor!",
             "status": "running"
     }
 

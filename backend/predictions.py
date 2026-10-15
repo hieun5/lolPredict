@@ -5,7 +5,7 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from ml.build_features import model_features, matchup_features, patch_features
@@ -68,18 +68,17 @@ class PredictionRequest(BaseModel):
 
 
 @router.get("/catalog")
-def catalog():
-    return load_bundle()["catalog"]
+def catalog(bundle: dict = Depends(load_bundle)):
+    return bundle["catalog"]
 
 
 @router.get("/evaluation")
-def evaluation():
-    return load_bundle()["report"]
+def evaluation(bundle: dict = Depends(load_bundle)):
+    return bundle["report"]
 
 
 @router.post("/predict")
-def predict(request: PredictionRequest):
-    bundle = load_bundle()
+def predict(request: PredictionRequest, bundle: dict = Depends(load_bundle)):
     catalog = bundle["catalog"]
     teams = {team["id"]: team for team in catalog["teams"]}
     if request.league not in catalog["leagues"]:

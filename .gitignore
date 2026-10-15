@@ -19,3 +19,8 @@ dist/
 artifacts/
 data/processed/
 data/snapshots/
+
+# Local hosting builds and tools
+.cache/
+.vercel/
+release/
