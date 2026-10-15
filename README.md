@@ -73,6 +73,7 @@ The test interval was already inspected for the first baseline. Current comparis
 cd frontend
 npm run build
 npm run lint
+npm test
 ```
 
 Generated outputs are excluded from Git:
@@ -93,9 +94,11 @@ The site uses all leagues in the supplied 2025 dataset and a competition filter.
 
 The workflow uses the existing 2025 dataset only and performs no downloads. A failed validation, fit, or artifact check leaves the active model selection unchanged. Rollback revalidates a completed run before activation. The lower-level `python -m ml.train` command still writes standalone artifacts, but does not change an existing active run pointer.
 
-Completed-draft submission moves focus and scrolls to the estimate after a successful prediction, respecting reduced-motion preferences.
+Completed-draft submission moves focus and scrolls to the estimate after a successful prediction, respecting reduced-motion preferences. The desktop flow also provides team/draft side swaps, remaining-pick guidance, inline prediction errors, draft summaries, and links back to editing. Performance-chart loading is independent of prediction availability.
 
-For an eventual hosted build, configure `VITE_API_BASE_URL` at frontend build time or provide a same-origin `/api` reverse proxy. The MVP remains focused on the supplied 2025 season. Browser/mobile polish and public hosting are future milestones.
+For an eventual hosted build, configure `VITE_API_BASE_URL` at frontend build time or provide a same-origin `/api` reverse proxy. The MVP remains focused on the supplied 2025 season and desktop web experience. Visual browser review and public hosting remain pending. Mobile layout work is outside the current scope.
+
+Development proceeds one milestone at a time. Completed milestones are committed and pushed to GitHub, then reviewed before beginning the next. Frontend interaction checks run with `npm test` (development Node version: 24.21).
 
 ## Method references
 
