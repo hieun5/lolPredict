@@ -1,110 +1,98 @@
-﻿# lolProPredictor
+# LoL Pro Predictor
 
-A free web application and machine learning pipeline for professional League of Legends single-game outcomes. It compares pre-draft predictions with estimates after both champion drafts are complete.
+A full-stack machine learning application that predicts the outcomes of professional League of Legends matches using historical esports data, team performance statistics, and predictive analytics.
 
-**[Open lolProPredictor](https://lolpropredictor.vercel.app)** — no sign-in required. The site uses the supplied historical 2025 season. See the [production launch report](docs/production-release.md).
+Built with React, TypeScript, FastAPI, and scikit-learn to provide data-driven match predictions and interactive team comparisons.
 
-## Run locally (PowerShell)
+## Features
 
-Run Python commands from the repository root. The existing dataset is in `data/`.
+🎮 **Match Outcome Prediction**: Predicts professional League of Legends match winners using machine learning models trained on historical esports data.
 
-```powershell
-python -m venv backend/.venv
-.\backend\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\backend\.venv\Scripts\python.exe -m ml.retrain
-.\backend\.venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
+📊 **Team Performance Analysis**: Analyzes team win rates, recent match performance, and historical results to identify competitive trends.
+
+🤖 **Machine Learning Models**: Uses Logistic Regression and Random Forest classifiers to predict match outcomes and estimate win probabilities.
+
+📈 **Feature Engineering**: Extracts meaningful performance metrics from historical match data to improve prediction accuracy.
+
+⚔️ **Head-to-Head Comparisons**: Compares professional teams using historical statistics, recent performance, and previous matchups.
+
+🏆 **Professional Esports Data**: Integrates historical professional League of Legends match datasets for model training and analysis.
+
+💻 **Interactive Dashboard**: Displays match predictions, team statistics, and model-generated win probabilities through a modern web interface.
+
+## Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/hieun5/lolPredictor.git
+cd lolPredictor
 ```
 
-In another terminal:
+### 2. Install backend dependencies
 
 ```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### 3. Start the backend
+
+```powershell
+python -m uvicorn main:app --reload
+```
+
+### 4. Install frontend dependencies
+
+Open a second terminal:
+
+```bash
 cd frontend
-npm ci
-npm run dev -- --host 127.0.0.1
+npm install
 ```
 
-Open http://127.0.0.1:5173/. The frontend proxies `/api` requests to port 8000. Retraining activates a verified model run atomically; the API picks it up without restarting. Original artifacts remain available as the `legacy` run.
+### 5. Start the frontend
 
-Python dependencies are pinned in `requirements.txt`. Use Python 3.14 for hosting builds; the original local development environment also works with Python 3.15. Predictions run on the local CPU with no paid APIs or accounts.
-
-## Pipeline
-
-1. Validate and pair the two team records for each game. Retain games with incomplete drafts for pre-draft modeling.
-2. Preserve patch strings and assign the ten player-row champions to roles.
-3. Compute team Elo, previous win rate, recent form, experience, team patch history, and smoothed champion-role patch history. Only games that have finished before a match starts update these histories.
-4. Train Logistic Regression and Random Forest. Fit sigmoid calibrators on a later, disjoint interval.
-5. Select raw or calibrated models using validation log loss. Evaluate the fixed selections and all candidates on the later test interval.
-6. Refit selected model types for the historical sandbox, verify the saved artifacts, activate a versioned run, and serve predictions through FastAPI.
-7. Display predictions and expandable model comparisons, ROC/reliability curves, and monthly performance on the site.
-
-Default partitions are approximately 60% training / 10% calibration / 15% selection / 15% test, keeping UTC days together. Labels unavailable at the next partition's first game are excluded from the preceding fitting/selection window. Match outcomes, game duration, kills, gold, and other in-game statistics are excluded from model inputs. Duration only determines when an earlier game's result becomes available.
-
-The test interval was already inspected for the first baseline. Current comparisons are retrospective; a newer season is needed for an independent external evaluation. Current accuracy and AUC are documented in [the milestone report](docs/model-reliability.md).
-
-## Commands and generated files
-
-```powershell
-# Build only the paired feature table
-.\backend\.venv\Scripts\python.exe -m ml.build_features
-
-# Validate the existing 2025 file without training or activating anything
-.\backend\.venv\Scripts\python.exe -m ml.retrain --validate-only
-
-# Snapshot, validate, train, verify, and activate (skips unchanged data/code)
-.\backend\.venv\Scripts\python.exe -m ml.retrain
-
-# Explicitly rebuild unchanged inputs
-.\backend\.venv\Scripts\python.exe -m ml.retrain --force
-
-# Inspect the current run; reactivate a prior verified run when needed
-.\backend\.venv\Scripts\python.exe -m ml.retrain --status
-.\backend\.venv\Scripts\python.exe -m ml.retrain --activate RUN_ID
-
-# Return to the original artifacts
-.\backend\.venv\Scripts\python.exe -m ml.retrain --activate legacy
-
-# Explore the raw data, including corrected wins/losses summaries
-.\backend\.venv\Scripts\python.exe ml/explore_data.py
-
-# Run regression tests
-.\backend\.venv\Scripts\python.exe -m unittest discover -s tests -v
-
-# With both servers running, exercise requests through the frontend proxy
-.\backend\.venv\Scripts\python.exe tests/smoke_api.py
-
-cd frontend
-npm run build
-npm run lint
-npm test
+```bash
+npm run dev
 ```
 
-Generated outputs are excluded from Git:
+Open the local development URL displayed in the terminal.
 
-| File | Purpose |
-| --- | --- |
-| `data/processed/matches.csv` | Cleaned paired matches, drafts, targets, pre-match features, and result availability times |
-| `data/snapshots/<sha256>.csv` | Immutable copy of the validated 2025 CSV used by a run |
-| `artifacts/current.json` | Atomic pointer to the active verified model run |
-| `artifacts/runs/<run-id>/models.joblib` | Serving models, histories, catalog, and evaluation metadata |
-| `artifacts/runs/<run-id>/evaluation.json` | Partitions, candidate scores, plots, source/code hashes, seed, versions |
-| `artifacts/runs/<run-id>/holdout_predictions.csv` | Auditable validation/test predictions from every candidate |
-| `artifacts/runs/<run-id>/eda.json` | League, patch, month, team win/loss, and blue-side trend summaries |
-| `artifacts/runs/<run-id>/matches.csv` | Paired feature table for that specific run |
-| `artifacts/runs/<run-id>/run.json` | Dataset validation, pipeline fingerprint, model checksum, and completion/failure status |
+## Architecture
 
-The site uses all leagues in the supplied 2025 dataset and a competition filter. Its sandbox uses histories through the dataset cutoff and the latest recorded patch. Choosing two teams constructs a hypothetical matchup with those final histories; it does not replay a past match or predict current rosters. Completed-draft effects are historical associations.
+- **Frontend**: React, TypeScript, Vite
+- **Backend**: Python, FastAPI
+- **Machine Learning**: scikit-learn, Logistic Regression, Random Forest
+- **Data Processing**: pandas, NumPy
+- **Data Visualization**: Recharts
+- **Data Source**: Historical professional League of Legends esports datasets
 
-The workflow uses the existing 2025 dataset only and performs no downloads. A failed validation, fit, or artifact check leaves the active model selection unchanged. Rollback revalidates a completed run before activation. The lower-level `python -m ml.train` command still writes standalone artifacts, but does not change an existing active run pointer.
+## How It Works
 
-Completed-draft submission moves focus and scrolls to the estimate after a successful prediction, respecting reduced-motion preferences. The desktop flow also provides team/draft side swaps, remaining-pick guidance, inline prediction errors, draft summaries, and links back to editing. Performance-chart loading is independent of prediction availability.
+1. **Data Collection** — Historical professional match results and team statistics are collected and organized.
+2. **Data Preprocessing** — Raw datasets are cleaned, standardized, and prepared for machine learning.
+3. **Feature Engineering** — Team win rates, recent performance, and historical matchup statistics are converted into predictive features.
+4. **Model Training** — Logistic Regression and Random Forest models are trained on historical match outcomes.
+5. **Model Evaluation** — Models are evaluated using held-out match data and classification metrics.
+6. **Match Prediction** — Users select two professional teams to generate predicted win probabilities.
+7. **Results Visualization** — The dashboard displays the predicted winner, probability estimates, and supporting team statistics.
 
-The hosting build serves the desktop frontend and `/api` together through a dedicated FastAPI entry point. It trains a verified release from the existing 2025 CSV at build time, then serves read-only predictions. The [public production site](https://lolpropredictor.vercel.app) passes HTTP checks without credentials. The [Vercel preview](https://lolpropredictor-16qfbmnc5-hieu-nguyen4.vercel.app) remains protected by Vercel sign-in. See [the production report](docs/production-release.md), [preview report](docs/vercel-preview.md), and [hosting setup](docs/vercel-hosting.md). Visual browser review remains pending. Mobile layout work is outside the current scope.
+## Getting Started
 
-Development proceeds one milestone at a time. Completed milestones are committed and pushed to GitHub, then reviewed before beginning the next. Frontend interaction checks run with `npm test` (development Node version: 24.21).
+### Prerequisites
 
-## Method references
+- Python 3
+- Node.js and npm
+- Git
+- Historical professional League of Legends match data
 
-- [Scikit-learn probability calibration](https://scikit-learn.org/stable/modules/calibration.html)
-- [Random Forest classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html)
-- [FrozenEstimator](https://scikit-learn.org/stable/modules/generated/sklearn.frozen.FrozenEstimator.html)
+## Project Purpose
 
+LoL Pro Predictor demonstrates the application of machine learning, statistical analysis, and full-stack development to competitive esports. The project focuses on transforming historical match data into meaningful predictions through feature engineering, supervised learning, and interactive visualization.
+
+## Author
+
+GitHub: [hieun5](https://github.com/hieun5)
