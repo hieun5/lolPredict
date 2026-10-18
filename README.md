@@ -7,17 +7,11 @@ Built with React, TypeScript, FastAPI, and scikit-learn to provide data-driven m
 ## Features
 
 🎮 **Match Outcome Prediction**: Predicts professional League of Legends match winners using machine learning models trained on historical esports data.
-
 📊 **Team Performance Analysis**: Analyzes team win rates, recent match performance, and historical results to identify competitive trends.
-
 🤖 **Machine Learning Models**: Uses Logistic Regression and Random Forest classifiers to predict match outcomes and estimate win probabilities.
-
 📈 **Feature Engineering**: Extracts meaningful performance metrics from historical match data to improve prediction accuracy.
-
 ⚔️ **Head-to-Head Comparisons**: Compares professional teams using historical statistics, recent performance, and previous matchups.
-
 🏆 **Professional Esports Data**: Integrates historical professional League of Legends match datasets for model training and analysis.
-
 💻 **Interactive Dashboard**: Displays match predictions, team statistics, and model-generated win probabilities through a modern web interface.
 
 ## Installation
